@@ -1,0 +1,108 @@
+CREATE DATABASE HOSPITAL_SAN_ROQUE;
+USE HOSPITAL_SAN_ROQUE;
+
+CREATE TABLE PACIENTE (
+id_paciente INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+nombre VARCHAR (20) NOT NULL,
+apellido VARCHAR (20) NOT NULL,
+dni INT UNIQUE NOT NULL,
+fecha_nacimiento DATE NOT NULL,
+sexo VARCHAR (2) NOT NULL,
+telefono VARCHAR (15) NOT NULL
+);
+
+INSERT INTO PACIENTE(id_paciente, nombre, apellido, dni, fecha_nacimiento, sexo, telefono)
+VALUES 
+('1','laura','gomez','35148957','1990-06-15','f','3515478625');
+
+SELECT * FROM PACIENTE;
+
+INSERT INTO PACIENTE(id_paciente, nombre, apellido, dni, fecha_nacimiento, sexo, telefono)
+VALUES 
+('2','mario','ruiz','31957450','1985-03-22','m','3544784621'),
+('3','andres', 'rivas', '43435999','2000-09-30','m','3541658472'),
+('4', 'carmen', 'salas','26896554', '1978-11-05', 'f', 3544859664),
+('5', 'valeria', 'mendoza', '38979123', '1995-08-20', 'f', '2806547222'),
+('6', 'hugo', 'castro', '29778239', '1970-01-10', 'm', '3541548887'),
+('7', 'sofia', 'luna', '40096543', '2002-12-12', 'f', '3515687452'),
+('8', 'tomas', 'herrera', '37768449', '1988-05-03', 'm', '3515447852');
+
+CREATE TABLE PROFESIONAL(
+id_doctor INT PRIMARY KEY AUTO_INCREMENT NOT NULL, 
+nombre_apellido VARCHAR (50) NOT NULL, 
+especialidad VARCHAR (20) NOT NULL, 
+telefono VARCHAR (15) NOT NULL
+);
+
+INSERT INTO PROFESIONAL(id_doctor, nombre_apellido, especialidad, telefono)
+VALUES
+('1','dr_martin_perez','dermatologo', '351586974'),
+('2','dra_monica_solis', 'cardiologa', '351546888'),
+('3','dr_carlos_jimenez', 'ortopedia', '351566745'),
+('4','dra_carla_ortega', 'medica_generalista', '351678994'),
+('5','dr_ricardo_morales', 'neumonologo', '351458455'),
+('6','dra_ana_duarte', 'ginecologa', '351566771');
+
+SELECT * FROM PROFESIONAL;
+
+CREATE TABLE CITAS( 
+id_cita INT PRIMARY KEY AUTO_INCREMENT NOT NULL, 
+id_paciente INT NOT NULL,
+id_doctor INT NOT NULL,
+fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP, 
+motivo VARCHAR (30),
+FOREIGN KEY (id_paciente) REFERENCES paciente (id_paciente),
+FOREIGN KEY (id_doctor) REFERENCES PROFESIONAL (id_doctor)
+);
+
+INSERT INTO CITAS(id_cita, id_paciente, id_doctor, fecha_hora, motivo)
+VALUES
+('1','6','3', '2025-05-15','molestias');
+
+SELECT * FROM CITAS;
+
+INSERT INTO CITAS(id_cita, id_paciente, id_doctor, fecha_hora, motivo)
+VALUES
+('2', '2','2', '2025-04-12','consulta'),
+('3', '8', '2', '2025-04-13', 'molestias'),
+('4', '1','6', '2025-03-10', 'control'),
+('5', '3', '6', '2025-03-18','control');
+
+CREATE TABLE TRATAMIENTO(
+id_tratamiento INT PRIMARY KEY NOT NULL,
+nombre_tratamiento VARCHAR (20) NOT NULL, 
+id_paciente INT NOT NULL,
+descripcion VARCHAR (50),
+FOREIGN KEY (id_paciente) REFERENCES paciente (id_paciente)
+);
+
+SELECT * FROM TRATAMIENTO;
+
+INSERT INTO TRATAMIENTO(id_tratamiento, nombre_tratamiento, id_paciente, descripcion)
+VALUES
+('1', 'cirugia_menor', '3', 'procedimiento_ambulatorio'),
+('2', 'vacunacion', '1', 'prevencion'),
+('3',  'control_cardiaca', '2', 'actividad_del_corazon'),
+('4', 'control_cardiaca', '8', 'seguimiento');
+
+CREATE TABLE INGRESO(
+id_ingreso INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+id_paciente INT NOT NULL, 
+id_habitacion INT NOT NULL,
+fecha_ingreso DATETIME NOT NULL,
+fecha_alta DATETIME NOT NULL,
+FOREIGN KEY (id_paciente) REFERENCES paciente (id_paciente)
+);
+
+SELECT * FROM INGRESO;
+
+CREATE TABLE HABITACION(
+id_habitacion INT PRIMARY KEY NOT NULL,
+id_ingreso INT NOT NULL,
+Piso VARCHAR (20) NOT NULL,
+numero_hab INT NOT NULL,
+tipo VARCHAR (20) NOT NULL,
+FOREIGN KEY (id_ingreso) REFERENCES ingreso(id_ingreso)
+);
+
+SELECT * FROM HABITACION;
