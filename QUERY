@@ -106,3 +106,160 @@ FOREIGN KEY (id_ingreso) REFERENCES ingreso(id_ingreso)
 );
 
 SELECT * FROM HABITACION;
+
+DELIMITER //
+
+CREATE TRIGGER evitar_ingreso_duplicado
+BEFORE INSERT ON ingreso
+FOR EACH ROW
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM ingreso
+    WHERE id_paciente = NEW.id_paciente AND fecha_alta IS NULL
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El paciente ya está ingresado.';
+  END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE TRIGGER evitar_cita_duplicada
+BEFORE INSERT ON citas
+FOR EACH ROW
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM citas
+    WHERE id_paciente = NEW.id_paciente
+      AND id_doctor = NEW.id_doctor
+      AND DATE(fecha_hora) = DATE(NEW.fecha_hora)
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El paciente ya tiene una cita con este médico ese día.';
+  END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE TRIGGER evitar_tratamiento_duplicado
+BEFORE INSERT ON tratamiento
+FOR EACH ROW
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM tratamiento 
+    WHERE id_paciente = NEW.id_paciente
+    AND nombre_tratamiento = NEW.nombre_tratamiento
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El paciente ya tiene este tratamiento asignado.';
+  END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Registrar_Cita (
+    IN p_id_paciente INT,
+    IN p_id_doctor INT,
+    IN p_fecha DATETIME,
+    IN p_motivo VARCHAR(30)
+)
+BEGIN
+    INSERT INTO CITAS (id_paciente, id_doctor, fecha_hora, motivo)
+    VALUES (p_id_paciente, p_id_doctor, p_fecha, p_motivo);
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE Ingresar_Paciente (
+    IN p_id_paciente INT,
+    IN p_id_habitacion INT,
+    IN p_fecha_ingreso DATETIME
+)
+BEGIN
+    INSERT INTO ingreso (id_paciente, id_habitacion, fecha_ingreso, fecha_alta)
+    VALUES (p_id_paciente, p_id_habitacion, p_fecha_ingreso, NULL);
+END //
+
+DELIMITER ;
+
+CREATE VIEW vista_historial_citas AS
+SELECT 
+  c.id_cita,
+  c.fecha_hora,
+  c.motivo,
+  p.nombre AS nombre_paciente,
+  p.apellido AS apellido_paciente,
+  d.nombre_apellido AS nombre_doctor,
+  d.especialidad
+FROM citas c
+JOIN paciente p ON c.id_paciente = p.id_paciente
+JOIN profesional d ON c.id_doctor = d.id_doctor;
+
+SHOW CREATE VIEW vista_historial_citas;
+
+CREATE VIEW vista_tratamientos_paciente AS
+SELECT 
+  t.id_tratamiento,
+  t.nombre_tratamiento,
+  t.descripcion,
+  p.nombre,
+  p.apellido
+FROM tratamiento t
+JOIN paciente p ON t.id_paciente = p.id_paciente;
+
+SHOW CREATE VIEW vista_tratamientos_paciente;
+
+CREATE VIEW vista_ocupacion_habitaciones AS
+SELECT 
+  h.id_habitacion,
+  h.numero_hab,
+  h.piso,
+  h.tipo,
+  CASE 
+    WHEN i.fecha_alta IS NULL THEN 'Ocupada'
+    ELSE 'Libre'
+  END AS estado
+FROM habitacion h
+LEFT JOIN ingreso i ON h.id_habitacion = i.id_habitacion
+  AND i.fecha_alta IS NULL;
+
+
+DELIMITER //
+
+CREATE FUNCTION nombre_completo_paciente(p_id INT)
+RETURNS VARCHAR(50)
+DETERMINISTIC
+BEGIN
+  DECLARE nombre_completo VARCHAR(50);
+  SELECT CONCAT(nombre, ' ', apellido)
+  INTO nombre_completo
+  FROM paciente
+  WHERE id_paciente = p_id;
+  RETURN nombre_completo;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE FUNCTION total_citas_paciente(p_id INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+  DECLARE total INT;
+  SELECT COUNT(*) INTO total FROM CITAS WHERE id_paciente = p_id;
+  RETURN total;
+END //
+
+DELIMITER ;
+
+
