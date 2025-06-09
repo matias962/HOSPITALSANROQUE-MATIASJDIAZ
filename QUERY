@@ -263,3 +263,34 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+
+CREATE PROCEDURE ingresar_nuevo_paciente (
+    IN p_nombre VARCHAR(20),
+    IN p_apellido VARCHAR(20),
+    IN p_dni INT,
+    IN p_fecha_nacimiento DATE,
+    IN p_sexo VARCHAR(2),
+    IN p_telefono VARCHAR(15)
+)
+BEGIN
+    -- Verificar que el DNI no esté repetido
+    IF EXISTS (SELECT 1 FROM paciente WHERE dni = p_dni) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Ya existe un paciente con ese DNI.';
+    ELSE
+        INSERT INTO paciente (
+            nombre, apellido, dni, fecha_nacimiento, sexo, telefono
+        ) VALUES (
+            p_nombre, p_apellido, p_dni, p_fecha_nacimiento, p_sexo, p_telefono
+        );
+    END IF;
+END //
+
+DELIMITER ;
+
+CALL ingresar_nuevo_paciente('Lucia', 'Fernandez', 40875123, '1994-07-21', 'F', '3514448899');
+CALL ingresar_nuevo_paciente('Marcos', 'Torres', 37249865, '1987-02-10', 'M', '3516677885');
+CALL ingresar_nuevo_paciente('Sofia', 'Herrera', 42315678, '2001-11-05', 'F', '3515511997');
+CALL ingresar_nuevo_paciente('Pedro', 'Salinas', 38977452, '1975-03-16', 'M', '3518844556');
+
